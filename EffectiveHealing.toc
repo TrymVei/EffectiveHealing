@@ -1,0 +1,5 @@
+## Interface: 100200
+## Title: EffectiveHealing
+## Notes: A addon for showing spell mana cost and hps to easier decide which spell to use.
+
+core.lua
