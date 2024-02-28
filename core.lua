@@ -1,13 +1,6 @@
--- Spells
-local HealingTouch1 = 5185
-local HealingTouch2 = 5186
-local HealingTouch3 = 5187
-local HealingTouch4 = 5188
-local HealingTouch5 = 5189
-local HealingTouch6 = 6678
-local HealingTouch7 = 8903
+-- Character stats
 
-local Rejuvenation1 = 417058
+local bonusHeal = GetSpellBonusHealing()
 
 ------------------------------------------------------------------------
 
@@ -18,13 +11,6 @@ local function getSpellCost(spellID)
   else
     print("Error: No cost found for spellID: " .. spellID)
   end
-end
-
-------------------------------------------------------------------------
-
-local function getHealingPower()
-  local healingPower = UnitStat("player", 4)
-  return healingPower
 end
 
 ------------------------------------------------------------------------
@@ -76,39 +62,32 @@ end
 
 ------------------------------------------------------------------------
 
-local function getHPS(spellID)
-  local healAmount = getSpellHealAmount(spellID)
-  local castTime = getCastTime(spellID)
-
-  if healAmount and castTime > 0 then
-    return healAmount / castTime
-  else
-    if getHealOverTime(spellID) then
-      local hot = getHealOverTime(spellID)
-      return healAmount / hot
-    else
-      return nil
-    end
-  end
-end
-
-------------------------------------------------------------------------
-
 local function getHealingAmountWithCoefficient(spellID)
   local healAmount = getSpellHealAmount(spellID)
   local castTime = getCastTime(spellID)
   if castTime == 0 then
-    castTime = 1
+    return healAmount + (0.8 * bonusHeal)
   end
   local coefficient = castTime / 3.5
-  local healingPower = getHealingPower()
 
-  return healAmount + (coefficient * healingPower)
+  return healAmount + (coefficient * bonusHeal)
 end
+
+------------------------------------------------------------------------
+
+local function getHPS(spellID)
+  local healAmount = getHealingAmountWithCoefficient(spellID)
+  local castTime = getCastTime(spellID)
+  if castTime == 0 then
+    return healAmount / getHealOverTime(spellID)
+  end
+  return healAmount / castTime
+end
+
 ------------------------------------------------------------------------
 
 function getHealPerMana(spellID)
-  local healAmount = getSpellHealAmount(spellID)
+  local healAmount = getHealingAmountWithCoefficient(spellID)
   local cost = getSpellCost(spellID)
   if healAmount and cost then
     return healAmount / cost
@@ -147,6 +126,7 @@ function showHPSInTooltips()
       if hpm then
         self:AddLine("HPM: " .. string.format("%.2f", hpm), 0, 125, 255)
       end
+      self:AddLine("Heal: " .. string.format("%.2f", getHealingAmountWithCoefficient(spellID)), 255, 255, 255)
     end
   end)
 end
